@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OSIsoft.PIDevClub.PIWebApiClient" Version="1.1.6" />
+    <PackageReference Include="OSIsoft.PIDevClub.PIWebApiClient" Version="1.1.6.1" />
   </ItemGroup>
 
 </Project>

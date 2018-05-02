@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using OSIsoft.PIDevClub.PIWebApiClient;
+using OSIsoft.PIDevClub.PIWebApiClient.Client;
+using OSIsoft.PIDevClub.PIWebApiClient.Model;
+using OSIsoft.PIDevClub.PIWebApiClient.WebID;
+using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
-using OSIsoft.PIDevClub.PIWebApiClient;
-using OSIsoft.PIDevClub.PIWebApiClient.Model;
-using OSIsoft.PIDevClub.PIWebApiClient.Client;
-using Newtonsoft.Json;
-using OSIsoft.PIDevClub.PIWebApiClient.WebID;
 
 namespace DemoWithClientLib
 {
@@ -25,68 +26,72 @@ namespace DemoWithClientLib
 
         private static async Task RunAsync()
         {
-
             PIWebApiClient client = new PIWebApiClient("https://localhost/piwebapi", true);
-            //Example 1 - Connecting to PI Web API   
-            PILanding landing = await client.Home.GetAsync();
-            Console.WriteLine("The System Link is {0}", landing.Links.System);
 
-            //Example 2 - Getting the PI Objects Web ID     
-            PIDataServer dataServer = client.DataServer.GetByName("SATURN-MARCOS");
-            PIPoint sinusoidPoint = client.Point.GetByPath("\\\\SATURN-MARCOS\\sinusoid");
+            //Example 1 - Connecting to PI Web API
+            PILanding homeLanding = await client.Home.GetAsync();
+            Console.WriteLine("System Link is {0}", homeLanding.Links.System);
+
+
+
+            //Example 2 - Getting the PI Objects Web ID
+            PIDataServer dataServer = client.DataServer.GetByPath("\\\\SATURN-MARCOS");
+            PIPoint sinusoidPoint = client.Point.GetByPath("\\\\SATURN-MARCOS\\SINUSOID", null);
             PIElement element = client.Element.GetByPath("\\\\SATURN-MARCOS\\Talk\\Element1");
-            PIAttribute attribute = client.Attribute.GetByPath("\\\\SATURN-MARCOS\\Talk\\Element1|Attribute1");
+            PIItemsAttribute attributes = client.Element.GetAttributes(element.WebId, null, 1000, null, false);
+            PIAttribute attribute = client.Attribute.GetByPath(string.Format("{0}|{1}", "\\\\SATURN-MARCOS\\Talk\\Element1", attributes.Items[0].Name));
 
+            Console.WriteLine("The PI Data Server Web ID is {0} and the PI Point Web ID is {1}", dataServer.WebId, sinusoidPoint.WebId);
 
             //Example 3 - Handling exceptions
             try
             {
-                PIWebApiClient client2 = new PIWebApiClient("https://devdata.osisoft.com/piwebapi", true);
-                //Example 1 - Connecting to PI Web API   
+                PIWebApiClient client2 = new PIWebApiClient("https://devdata.osisoft.com/piwebapi/", true);
                 await client2.Home.GetAsync();
-
             }
             catch (ApiException e)
             {
-                Console.WriteLine("Expected exception: {0}", e.Message);
+                Console.WriteLine("Expected error: {0}", e.Message);
             }
 
             try
             {
-                PIPoint sinusoidPoint2 = client.Point.GetByPath("\\\\SATURN-MARCOS\\sin453534usoid");
-
-
+                PIPoint point = client.Point.GetByPath("\\\\SATURN-MARCOS\\SINUSOID24323", null);
             }
             catch (ApiException e)
             {
-                Console.WriteLine("Expected exception: {0}", e.Message);
+                Console.WriteLine("Expected error: {0}", e.Message);
             }
 
-            //Example 4 - Change the description of the PI Point   
-            PIPoint updatedPIPoint = new PIPoint();
-            updatedPIPoint.Descriptor = "New descriptor!!";
-            var res = client.Point.UpdateWithHttpInfo(sinusoidPoint.WebId, updatedPIPoint);
-            if (res.StatusCode<300)
+            //Example 4 - Change the description of the PI Point
+            string webId = sinusoidPoint.WebId;
+            PIPoint updatePoint = new PIPoint();
+            updatePoint.Descriptor = "New description";
+            ApiResponse<Object> response = client.Point.UpdateWithHttpInfo(webId, updatePoint);
+
+            if (response.StatusCode < 300)
             {
-                Console.WriteLine("Success!");
+                Console.WriteLine("The PI Point description was update successfully");
             }
+
+
             //Example 5 - Retrieving data in bulk
             PIPoint point1 = client.Point.GetByPath("\\\\SATURN-MARCOS\\sinusoid");
             PIPoint point2 = client.Point.GetByPath("\\\\SATURN-MARCOS\\sinusoidu");
             PIPoint point3 = client.Point.GetByPath("\\\\SATURN-MARCOS\\cdt158");
             List<string> webIds = new List<string>() { point1.WebId, point2.WebId, point3.WebId };
+            PIItemsStreamValues piItemsStreamValues = client.StreamSet.GetRecordedAdHoc(webId: webIds, startTime: "*-3d", endTime: "*");
 
-            PIItemsStreamValues itemsStreamValues = client.StreamSet.GetRecordedAdHoc(webIds, startTime: "*-1d", endTime: "*");
-            foreach (PIStreamValues streamValues in itemsStreamValues.Items)
+            foreach (PIStreamValues piStreamValues in piItemsStreamValues.Items)
             {
-                foreach (PITimedValue value in streamValues.Items)
+                foreach (PITimedValue value in piStreamValues.Items)
                 {
-                    Console.WriteLine("{0} {1} {2}", streamValues.Name, value.Value, value.Timestamp);
+                    Console.WriteLine("PI Point: {0}, Value: {1}, Timestamp: {2}", piStreamValues.Name, value.Value, value.Timestamp);
                 }
             }
 
 
-            ////Example 6 - Sending data in bulk
+            //Example 6 - Sending data in bulk
             var piStreamValuesList = new List<PIStreamValues>() {
                 new PIStreamValues() {
                     WebId = point1.WebId,
@@ -161,7 +166,6 @@ namespace DemoWithClientLib
             PIDataServer dataServer2 = client.DataServer.Get(webId1PathOnly);
             string webId2PathOnly = client.WebIdHelper.GenerateWebIdByPath("\\\\SATURN-MARCOS\\Talk\\Element1|Attribute1", typeof(PIAttribute), typeof(PIElement));
             PIAttribute attribute2 = client.Attribute.Get(webId2PathOnly);
-
 
 
         }

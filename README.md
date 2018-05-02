@@ -1,2 +1,4 @@
 # Building-PI-Application-Faster-using-PI-Web-API-Client-Libraries-TechCon2018
-PI World 2018 Talk: Building PI Application Faster using PI Web API Client Libraries
+This is repository has the presentation and the source code package for the OSIsoft PI World 2018 Talk: Building PI Application Faster using PI Web API Client Libraries.
+
+

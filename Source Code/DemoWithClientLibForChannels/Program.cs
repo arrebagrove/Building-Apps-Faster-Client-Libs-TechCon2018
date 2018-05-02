@@ -14,11 +14,12 @@ namespace DemoWithClientLibForChannels
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Yellow;
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-            PIWebApiClient client = new PIWebApiClient("https://marc-rras.osisoft.int/piwebapi", false, "marc.adm", "kk");
-            PIPoint point1 = client.Point.GetByPath("\\\\marc-pi2016\\sinusoid");
-            PIPoint point2 = client.Point.GetByPath("\\\\marc-pi2016\\sinusoidu");
-            PIPoint point3 = client.Point.GetByPath("\\\\marc-pi2016\\cdt158");
+            PIWebApiClient client = new PIWebApiClient("https://localhost/piwebapi", true);
+            PIPoint point1 = client.Point.GetByPath("\\\\SATURN-MARCOS\\sinusoid");
+            PIPoint point2 = client.Point.GetByPath("\\\\SATURN-MARCOS\\sinusoidu");
+            PIPoint point3 = client.Point.GetByPath("\\\\SATURN-MARCOS\\cdt158");
             List<string> webIds = new List<string>() { point1.WebId, point2.WebId, point3.WebId };
 
             //Example 10 - PI Web API Channels - StartStreamSets
